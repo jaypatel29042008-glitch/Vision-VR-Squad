@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirScript | Team Vision VR Squad</title>
+    <style>
+        /* --- 1. DESIGN SYSTEM --- */
+        :root {
+            --bg-dark: #020617;     /* Deep Space Blue */
+            --bg-card: #0f172a;     /* Slate */
+            --primary: #3b82f6;     /* Bright Blue */
+            --secondary: #10b981;   /* Emerald */
+            --accent: #f59e0b;      /* Amber */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-stack: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-dark); color: var(--text-main); font-family: var(--font-stack); overflow-x: hidden; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        
+        /* Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .section { padding: 80px 0; border-bottom: 1px solid #1e293b; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .text-center { text-align: center; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+
+        /* Typography */
+        h1, h2, h3 { line-height: 1.2; font-weight: 700; margin-bottom: 1rem; }
+        h1 { font-size: 3.5rem; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 2.5rem; color: var(--text-main); }
+        .highlight { color: var(--primary); }
+        .pill { background: rgba(59, 130, 246, 0.1); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(59, 130, 246, 0.2); display: inline-block; margin-bottom: 15px; }
+
+        /* --- 2. NAVIGATION --- */
+        nav { position: fixed; top: 0; width: 100%; z-index: 1000; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; }
+        .nav-inner { height: 70px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; }
+        .nav-links { display: flex; gap: 25px; }
+        .nav-links a:hover { color: var(--primary); }
+
+        /* --- 3. HERO & VIDEO PLAYER --- */
+        .hero { padding-top: 120px; padding-bottom: 60px; text-align: center; background: radial-gradient(circle at center, #1e293b 0%, #020617 70%); }
+        .hero p { font-size: 1.25rem; color: var(--text-muted); max-width: 800px; margin: 0 auto 40px; }
+
+        /* Virtual Video Player Container */
+        .video-frame {
+            width: 100%; max-width: 900px; aspect-ratio: 16/9; margin: 0 auto;
+            background: #000; border: 4px solid #334155; border-radius: 20px;
+            position: relative; overflow: hidden; box-shadow: 0 0 80px rgba(37, 99, 235, 0.15);
+        }
+        
+        /* Slides inside Video */
+        .v-slide {
+            position: absolute; inset: 0; padding: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle, #1e293b, #000);
+            opacity: 0; transition: opacity 0.8s ease; z-index: 1;
+        }
+        .v-slide.active { opacity: 1; z-index: 2; }
+        .v-slide h2 { font-size: 3rem; color: white; margin-bottom: 10px; text-transform: uppercase; }
+        .v-slide p { font-size: 1.4rem; color: #cbd5e1; max-width: 80%; }
+        .v-icon { font-size: 5rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+        
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* Controls Overlay */
+        .v-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; cursor: pointer; transition: 0.3s;
+        }
+        .play-btn { font-size: 4rem; color: white; border: 4px solid white; border-radius: 50%; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; padding-left: 8px; transition: 0.3s; }
+        .v-overlay:hover .play-btn { background: var(--primary); border-color: var(--primary); transform: scale(1.1); }
+        
+        .progress-bar { position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: #333; z-index: 5; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.5s linear; }
+        .captions { position: absolute; bottom: 30px; width: 90%; left: 5%; background: rgba(0,0,0,0.7); color: #facc15; padding: 10px; border-radius: 8px; font-size: 1.1rem; text-align: center; display: none; z-index: 4; }
+
+        /* --- 4. CONTENT CARDS --- */
+        .card { background: var(--bg-card); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .icon-box { font-size: 2.5rem; margin-bottom: 15px; }
+
+        /* --- 5. ARCHITECTURE DIAGRAM (CSS FLOWCHART) --- */
+        .diagram-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; margin-top: 40px; }
+        .diagram-box {
+            background: #1e293b; border: 2px solid #475569; padding: 20px; border-radius: 12px;
+            width: 220px; text-align: center; position: relative;
+        }
+        .diagram-box h4 { color: var(--primary); margin-bottom: 5px; font-size: 1.1rem; }
+        .diagram-box p { font-size: 0.9rem; color: var(--text-muted); }
+        .arrow { font-size: 2rem; color: #475569; }
+        
+        /* --- 6. COMPARISON TABLE --- */
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 12px; overflow: hidden; margin-top: 30px; }
+        th { background: #0f172a; color: var(--primary); padding: 20px; text-align: left; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        td { padding: 20px; border-bottom: 1px solid #334155; color: var(--text-muted); }
+        tr:last-child td { border-bottom: none; }
+        .check { color: var(--secondary); font-weight: bold; }
+
+        /* --- 7. TEAM GRID --- */
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .member { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border-top: 3px solid var(--accent); }
+        .member h3 { font-size: 1.2rem; margin-bottom: 5px; }
+        .enroll { font-family: monospace; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--accent); }
+
+        /* --- 8. FOOTER --- */
+        footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
+        
+        /* Animation Utility */
+        .fade-up { opacity: 0; transform: translateY(30px); transition: 0.8s; }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="container nav-inner">
+            <div class="logo">Vision VR <span style="color:var(--primary)">Squad</span></div>
+            <div class="nav-links">
+                <a href="#pitch">Pitch</a>
+                <a href="#details">Details</a>
+                <a href="#architecture">Tech</a>
+                <a href="#team">Team</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero" id="pitch">
+        <div class="container fade-up">
+            <div class="pill">Track 1: Inclusive & Human-Centered Innovation</div>
+            <h1>Overcoming the<br><span class="highlight">Cocktail Party Effect</span></h1>
+            <p><strong>AirScript:</strong> A Spatial Augmented Reality solution to enhance speech intelligibility for the hearing impaired by visualizing conversations in real-time.</p>
+        </div>
+
+        <div class="video-frame fade-up">
+            <div class="v-overlay" id="startBtn" onclick="playVideo()">
+                <div class="play-btn">▶</div>
+                <h3 style="color:white; margin-top:20px; font-weight:600;">WATCH PITCH</h3>
+            </div>
+
+            <div class="v-slide active" id="s-0">
+                <div class="v-icon">👋</div>
+                <h2>Hello Judges</h2>
+                <p>Team: Vision VR Squad (ID: 29)<br>Institute: LDRP-ITR</p>
+            </div>
+            
+            <div class="v-slide" id="s-1">
+                <div class="v-icon">🔊</div>
+                <h2>The Problem</h2>
+                <p>The "Cocktail Party Effect": The inability to focus on a single voice in a noisy room, leading to social isolation.</p>
+            </div>
+
+            <div class="v-slide" id="s-2">
+                <div class="v-icon">✨</div>
+                <h2>The Solution: AirScript</h2>
+                <p>We use AR to float subtitles <strong>next to the speaker's face</strong>. This restores eye contact and context.</p>
+            </div>
+
+            <div class="v-slide" id="s-3">
+                <div class="v-icon">⚙️</div>
+                <h2>How It Works</h2>
+                <p>1. Unity AR Foundation (Tracking)<br>2. OpenAI Whisper (Transcription)<br>3. Python NLP (Sentiment Analysis)</p>
+            </div>
+
+            <div class="v-slide" id="s-4">
+                <div class="v-icon">📊</div>
+                <h2>Feasibility</h2>
+                <p>Addressing Latency: Hybrid On-Device Models.<br>Addressing Noise: Directional Audio Processing.</p>
+            </div>
+
+            <div class="v-slide" id="s-5">
+                <div class="v-icon">❤️</div>
+                <h2>Impact</h2>
+                <p>Social Inclusion. Cognitive Ease. Safety.<br>Making every conversation accessible.</p>
+            </div>
+
+            <div class="v-slide" id="s-6">
+                <div class="v-icon">🚀</div>
+                <h2>Thank You</h2>
+                <p>Vote for Vision VR Squad.<br>Let's make the world hear better.</p>
+            </div>
+
+            <div class="captions" id="captionBox"></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+        </div>
+    </header>
+
+    <section id="details" class="section">
+        <div class="container">
+            <h2 class="text-center">Detailed Project Analysis</h2>
+            <div class="grid-3 fade-up" style="margin-top: 40px;">
+                <div class="card">
+                    <div class="icon-box">🧠</div>
+                    <h3>Cognitive Load</h3>
+                    <p>Trying to lip-read or read static text on a phone while listening is mentally exhausting. AirScript reduces this load by placing text in the line of sight.</p>
+                </div>
+                <div class="card">
+                    <div class="icon-box">👁️</div>
+                    <h3>Visual Focus</h3>
+                    <p>Current apps force users to look down at screens ("Heads-Down"). AirScript enables "Heads-Up" communication, maintaining eye contact.</p>
+                </div>
+                <div class="card">
+                    <div class="icon-box">🎭</div>
+                    <h3>Emotional Context</h3>
+                    <p>Standard captions lack tone. Our NLP engine analyzes sentiment, making angry text <span style="color:#ef4444">shaky/red</span> and happy text <span style="color:#34d399">glowing/green</span>.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="architecture" class="section" style="background: #0b1120;">
+        <div class="container text-center">
+            <h2>System Architecture</h2>
+            <p class="text-muted">Data flow from real-world input to AR output</p>
+            
+            <div class="diagram-container fade-up">
+                <div class="diagram-box">
+                    <h4>1. Input Layer</h4>
+                    <p>Camera Feed +<br>Directional Microphone</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="diagram-box">
+                    <h4>2. App Layer</h4>
+                    <p>Unity AR Foundation<br>(Face/Plane Tracking)</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="diagram-box">
+                    <h4>3. Processing</h4>
+                    <p>OpenAI Whisper (STT)<br>+ Python Sentiment NLP</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="diagram-box">
+                    <h4>4. Visualization</h4>
+                    <p>Render 3D Text Mesh<br>at Anchor Coordinates</p>
+                </div>
+            </div>
+
+            <div class="grid-2 fade-up" style="margin-top: 60px; text-align: left;">
+                <div class="card">
+                    <h3 class="highlight">Feasibility Strategy</h3>
+                    <ul style="padding-left: 20px; color: var(--text-muted);">
+                        <li><strong>Latency:</strong> Utilizing on-device lightweight models (Vosk) for immediate feedback, refined by Cloud API.</li>
+                        <li><strong>Hardware:</strong> Compatible with standard ARCore/ARKit phones; no expensive glasses required initially.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3 class="highlight">Challenges & Risks</h3>
+                    <ul style="padding-left: 20px; color: var(--text-muted);">
+                        <li><strong>Noise Interference:</strong> Background noise reduces STT accuracy. <em>Mitigation:</em> Noise suppression algorithms.</li>
+                        <li><strong>Battery Drain:</strong> AR + AI is power intensive. <em>Mitigation:</em> Optimization of frame rendering rates.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="text-center">Competitive Advantage</h2>
+            <div style="overflow-x: auto;" class="fade-up">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Standard Caption Apps</th>
+                            <th>Lip Reading</th>
+                            <th>AirScript (Proposed)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Focus Direction</strong></td>
+                            <td>Screen (Look Down)</td>
+                            <td>Lips (Intense Stare)</td>
+                            <td><span class="check">Heads-Up (Natural)</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Speaker ID</strong></td>
+                            <td>Single Block of Text</td>
+                            <td>Confusing in Groups</td>
+                            <td><span class="check">Spatial Anchors</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Emotion</strong></td>
+                            <td>None (Text Only)</td>
+                            <td>Guesswork</td>
+                            <td><span class="check">Visual Style Cues</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>History</strong></td>
+                            <td>Scroll Log</td>
+                            <td>None</td>
+                            <td><span class="check">Chat Log Review</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="team" class="section" style="background: #0b1120;">
+        <div class="container">
+            <h2 class="text-center">Vision VR Squad</h2>
+            <p class="text-center text-muted" style="margin-bottom: 40px;">LDRP-ITR | ID: 29</p>
+            
+            <div class="team-grid fade-up">
+                <div class="member">
+                    <h3>Jay Patel</h3>
+                    <p class="text-muted">Team Leader</p>
+                    <span class="enroll">25BECE30210</span>
+                </div>
+                <div class="member">
+                    <h3>Meet Panchal</h3>
+                    <p class="text-muted">Co-Leader</p>
+                    <span class="enroll">25BECE30155</span>
+                </div>
+                <div class="member">
+                    <h3>Krish Panchal</h3>
+                    <p class="text-muted">Member</p>
+                    <span class="enroll">25BECE30153</span>
+                </div>
+                <div class="member">
+                    <h3>Vishal Tank</h3>
+                    <p class="text-muted">Member</p>
+                    <span class="enroll">25BECE30351</span>
+                </div>
+                <div class="member" style="border-top-color: var(--primary);">
+                    <h3>Dr. Kaushal Bhavsar</h3>
+                    <p class="text-muted">Project Guide</p>
+                    <span class="enroll">Dept. Mechanical</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Hackathon 2025 Submission | Track 1: Inclusive Innovation</p>
+            <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 10px;">Created for demonstration purposes.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. ANIMATION OBSERVER ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+        // --- 2. VIRTUAL VIDEO LOGIC ---
+        // Synchronized Script from PDF/PPT details
+        const script = [
+            { id: 0, duration: 5000, text: "Welcome Judges. We are Team Vision VR Squad from LDRP ITR. This is AirScript." },
+            { id: 1, duration: 7000, text: "The problem we are solving is the Cocktail Party Effect. For the hearing impaired, separating voices in noise is impossible." },
+            { id: 2, duration: 6000, text: "Current apps force users to look down at screens. This breaks eye contact and destroys social connection." },
+            { id: 3, duration: 7000, text: "Our solution, AirScript, uses Augmented Reality to float subtitles directly next to the speaker's face." },
+            { id: 4, duration: 7000, text: "Technically, we use Unity AR Foundation for tracking, and OpenAI Whisper for real-time transcription." },
+            { id: 5, duration: 6000, text: "We tackle feasibility by using hybrid models to reduce latency and directional audio for noise control." },
+            { id: 6, duration: 6000, text: "The impact is real: Social inclusion, cognitive ease, and restored confidence for millions." },
+            { id: 7, duration: 5000, text: "Thank you for listening. Vote for Vision VR Squad. Let's make the world hear better." }
+        ];
+
+        let currentIndex = 0;
+        let isPlaying = false;
+
+        function playVideo() {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            // UI Updates
+            document.getElementById('startBtn').style.opacity = '0';
+            document.getElementById('startBtn').style.pointerEvents = 'none';
+            document.getElementById('captionBox').style.display = 'block';
+
+            currentIndex = 0;
+            runSlide();
+        }
+
+        function runSlide() {
+            if (currentIndex >= script.length) {
+                endVideo();
+                return;
+            }
+
+            const step = script[currentIndex];
+
+            // 1. Visuals
+            document.querySelectorAll('.v-slide').forEach(s => s.classList.remove('active'));
+            document.getElementById(`s-${currentIndex}`).classList.add('active');
+
+            // 2. Progress Bar
+            const pct = ((currentIndex + 1) / script.length) * 100;
+            document.getElementById('progressBar').style.width = `${pct}%`;
+
+            // 3. Captions
+            document.getElementById('captionBox').innerText = step.text;
+
+            // 4. Audio
+            speak(step.text);
+
+            // 5. Timer
+            setTimeout(() => {
+                currentIndex++;
+                runSlide();
+            }, step.duration);
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.rate = 1; 
+            msg.pitch = 1;
+            
+            // Try to find a good voice
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.lang.includes('en-US')) || voices[0];
+            if(preferred) msg.voice = preferred;
+
+            window.speechSynthesis.speak(msg);
+        }
+
+        function endVideo() {
+            setTimeout(() => {
+                document.getElementById('startBtn').style.opacity = '1';
+                document.getElementById('startBtn').style.pointerEvents = 'auto';
+                document.getElementById('startBtn').innerHTML = '<div class="play-btn">↺</div><h3 style="color:white; margin-top:20px;">REPLAY</h3>';
+                document.getElementById('captionBox').style.display = 'none';
+                isPlaying = false;
+            }, 1000);
+        }
+
+        // Preload voices
+        window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
